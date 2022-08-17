@@ -96,7 +96,7 @@ def main():
                 rewards (list): [{reward,desc,type,order}]
             """
 
-            idRow = common.getListRow(lv_ID, id)
+            idRow = getDataOrder(lv_ID, id)
             for i in range(len(rewards)):
                 r = rewards[i]
                 if r['type'] != -1:  # 普通掉落
@@ -263,7 +263,7 @@ def getRewardDesc(itemMap, wbChangeMap, itemType, itemID, role=0, lev=0):
         r_reward = rewardSht.used_range
         rv_column = r_reward.rows[2].value
         rv_id = r_reward.columns[0].value
-        r_row = common.getListRow(rv_id, itemID)
+        r_row = getDataOrder(rv_id, itemID)
         if r_row == -1 or itemMap[itemType]['描述字段'] is None:
             desc = toStr(itemMap[itemType]['文字描述'])
         else:

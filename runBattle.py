@@ -8,18 +8,19 @@ from battle import propertyCalc
 try:
     common.quitHideApp()
     if len(sys.argv) == 1:
-        propertyCalc.main()
+        stageTimeCalc.main()
     for p in sys.argv[1:]:
         print("执行脚本：" + p)
         if p == 'stageTimeCalc':
             stageTimeCalc.main()
         if p == 'copyData':
             copyData.main()
+            input("Press Enter To Exit...")
         if p == 'propertyCalc':
             propertyCalc.main()
         else:
-            print("未找到可执行脚本")
-    input("Press Enter To Exit...")
+            print("未找到可执行脚本:" + p)
+
 except BaseException:
     traceback.print_exc()
     input("Error...")

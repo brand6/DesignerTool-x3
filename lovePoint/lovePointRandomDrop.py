@@ -31,13 +31,13 @@ def main():
 
         dropWb = WorkBook(tablePath, "Drop.xlsx", app, 'Drop')
         dropCols = dropWb.sheet.used_range.raw_value[2]
-        idCol = common.getDataOrder(dropCols, 'ID') + 1
-        groupCol = common.getDataOrder(dropCols, 'GroupID') + 1
-        levCol = common.getDataOrder(dropCols, 'LevelID') + 1
-        descCol = common.getDataOrder(dropCols, 'Description') + 1
-        itemCol = common.getDataOrder(dropCols, 'Item') + 1
-        weightCol = common.getDataOrder(dropCols, 'Weight') + 1
-        timesCol = common.getDataOrder(dropCols, 'MaxTime') + 1
+        idCol = getDataOrder(dropCols, 'ID') + 1
+        groupCol = getDataOrder(dropCols, 'GroupID') + 1
+        levCol = getDataOrder(dropCols, 'LevelID') + 1
+        descCol = getDataOrder(dropCols, 'Description') + 1
+        itemCol = getDataOrder(dropCols, 'Item') + 1
+        weightCol = getDataOrder(dropCols, 'Weight') + 1
+        timesCol = getDataOrder(dropCols, 'MaxTime') + 1
 
         for j in range(len(dataRng[0])):
             count = [0, 0, 0, 0]

@@ -1,6 +1,13 @@
 import xlwings as xw
-from common import common
+from xlwings import Sheet
+from xlwings import Range
 from common.printer import Printer
+from common.common import getColBy2Para
+from common.common import getDataColOrder
+from common.common import getListData
+from common.common import getRowData
+from common.common import isNumberValid
+from common.common import toNum
 
 # 脚本说明：
 # 用于战斗数值模板表计算关卡强度
@@ -9,196 +16,194 @@ from common.printer import Printer
 
 def main():
     printer = Printer()
-    toStr = common.toStr
-    isNum = common.isNumber
-    getDataOrder = common.getDataOrder
-
     printer.printColor('~~~开始处理数据~~~', 'green')
-    app = xw.apps.active
-    try:
-        app.screen_updating = False
-        app.display_alerts = False
-        wb = xw.books.active
-        stageSht = wb.sheets['关卡']
-        calcSht = wb.sheets['验算']
 
-        stageRange = stageSht.used_range
-        sv_columnData = stageRange.rows[1].value
-        sv_stageIds = stageRange.columns[getDataOrder(sv_columnData, '关卡id')].value
-        sv_stageTypes = stageRange.columns[getDataOrder(sv_columnData, '关卡类型')].value
-        sv_pLevs = stageRange.columns[getDataOrder(sv_columnData, '等级')].value
-        sv_m1IDs = stageRange.columns[getDataOrder(sv_columnData, 'ID1')].value
-        sv_m1Porps = stageRange.columns[getDataOrder(sv_columnData, '属性1')].value
-        sv_m1Levs = stageRange.columns[getDataOrder(sv_columnData, '等级1')].value
-        sv_m1Nums = stageRange.columns[getDataOrder(sv_columnData, '数量1')].value
-        sv_m2IDs = stageRange.columns[getDataOrder(sv_columnData, 'ID2')].value
-        sv_m2Porps = stageRange.columns[getDataOrder(sv_columnData, '属性2')].value
-        sv_m2Levs = stageRange.columns[getDataOrder(sv_columnData, '等级2')].value
-        sv_m2Nums = stageRange.columns[getDataOrder(sv_columnData, '数量2')].value
-        sv_m3IDs = stageRange.columns[getDataOrder(sv_columnData, 'ID3')].value
-        sv_m3Porps = stageRange.columns[getDataOrder(sv_columnData, '属性3')].value
-        sv_m3Levs = stageRange.columns[getDataOrder(sv_columnData, '等级3')].value
-        sv_m3Nums = stageRange.columns[getDataOrder(sv_columnData, '数量3')].value
+    wb = xw.books.active
+    stageSht: Sheet = wb.sheets['关卡']
+    attrSht: Sheet = wb.sheets['战斗属性']
+    pSkillSht: Sheet = wb.sheets['角色技能']
+    mSkillSht: Sheet = wb.sheets['怪物技能']
+    deepSht: Sheet = wb.sheets['深化&套装']
 
-        calcRange = calcSht.used_range
-        cv_columnData = calcRange.rows[1].value
-        c_index_col = getDataOrder(cv_columnData, '索引')
-        c_stageId_col = getDataOrder(cv_columnData, '关卡')
-        c_stageType_col = getDataOrder(cv_columnData, '关卡类型')
-        c_mID_col = getDataOrder(cv_columnData, 'ID2')
-        c_indexs = calcRange.columns[c_index_col]
+    stageRange: Range = stageSht.used_range
+    stageShtData = stageRange.value
+    stageDataCols = getColBy2Para('关卡数据', ['关卡类型', '总输出', '总时长'], stageShtData)
 
-        # 查找所在行，未查到时返回插入位置
-        def getDataRow(findRange, findValue):
-            findData = findRange.value
-            insertRow = 1
-            for i in range(len(findData)):
-                if findData[i] == findValue:
-                    return i, insertRow
-                elif isNum(findData[i]) and findData[i] < findValue:
-                    insertRow = i + 2
+    attrShtData = attrSht.used_range.value
+    attrLevCol = getDataColOrder(attrShtData, '等级', 1)
+    attrColsMap = {}
+    attrColsMap['主线'] = getColBy2Para('主线', ['生命比', '攻击比'], attrShtData)
+    attrColsMap['零点追踪'] = getColBy2Para('零点追踪', ['生命比', '攻击比'], attrShtData)
+    attrColsMap[11] = getColBy2Para(11, ['生命', '攻击', '防御', '暴击', '暴伤'], attrShtData)
+    attrColsMap[12] = getColBy2Para(12, ['生命', '攻击', '防御', '暴击', '暴伤'], attrShtData)
+    attrColsMap[13] = getColBy2Para(13, ['生命', '攻击', '防御', '暴击', '暴伤'], attrShtData)
+    attrColsMap['男主'] = getColBy2Para('男主', ['生命', '攻击', '防御', '暴击', '暴伤'], attrShtData)
+
+    # 获得玩家属性数据
+    playerLevCol = getColBy2Para('玩家', '等级', stageShtData)
+    playerLevIds = stageRange.columns[playerLevCol].value
+    pAtrrList = getListData(playerLevIds, attrLevCol, attrColsMap['男主'], attrShtData)
+
+    # 获得男女主技能数据
+    pSkillShtData = pSkillSht.used_range.value
+    pSkillIdCol = getDataColOrder(pSkillShtData, '角色id', 0)
+    pSkillDataCol = getDataColOrder(pSkillShtData, ['生命加成', '预期DPS'], 0)
+    playerWeaponCol = getColBy2Para('玩家', '武器id', stageShtData)
+    playerWeaponIds = stageRange.columns[playerWeaponCol].value
+    weaponSkillList = getListData(playerWeaponIds, pSkillIdCol, pSkillDataCol, pSkillShtData)
+    playerScoreCol = getColBy2Para('玩家', '搭档id', stageShtData)
+    playerScoreIds = stageRange.columns[playerScoreCol].value
+    scoreSkillList = getListData(playerScoreIds, pSkillIdCol, pSkillDataCol, pSkillShtData)
+
+    # 获得男主深化数据
+    deepShtData = deepSht.used_range.value
+    deepCheckCol = getDataColOrder(deepShtData, ['score', 'lev'], 0)
+    deepDataCol = getDataColOrder(deepShtData, ['累计伤害加成', '累计承受伤害'], 0)
+    playerDeepCol = getColBy2Para('玩家', ['搭档id', '深化'], stageShtData)
+    playerDeepLevs = stageRange.columns[playerDeepCol[1]].value
+    playerScoreDeeps = []
+    for i in range(len(playerScoreIds)):
+        playerScoreDeeps.append([playerScoreIds[i], playerDeepLevs[i]])
+    deepDataList = getListData(playerScoreDeeps, deepCheckCol, deepDataCol, deepShtData)
+    # 计算玩家属性[dps输出，hp，防御，承受伤害]
+    playerAtrrList = getPlayerFightAttr(pAtrrList, weaponSkillList, scoreSkillList, deepDataList)
+
+    # 获取怪物数据
+    mSkillShtData = mSkillSht.used_range.value
+    mSkillIdCol = getDataColOrder(mSkillShtData, '怪物id', 0)
+    mSkillDataCol = getDataColOrder(mSkillShtData, ['生命加成', '预期DPS'], 0)
+    monstersDataCols = []
+    monstersDataCols.append(getColBy2Para('怪1', ['波次', 'ID', '数量', '属性', '等级', '输出', '生存'], stageShtData))
+    monstersDataCols.append(getColBy2Para('怪2', ['波次', 'ID', '数量', '属性', '等级', '输出', '生存'], stageShtData))
+    monstersDataCols.append(getColBy2Para('怪3', ['波次', 'ID', '数量', '属性', '等级', '输出', '生存'], stageShtData))
+    monstersAtrrList = []  # 怪物属性[波次，数量，有效生命，dps输出，lev]
+
+    # 获取怪物属性数据
+    for r in range(2, len(stageShtData)):
+        monsterAtrrList = []
+        for i in range(len(monstersDataCols)):
+            rList = []
+            pList = [0] * 5  # [波次，数量，有效生命，dps输出，lev]
+            attrType = stageShtData[r][monstersDataCols[i][3]]
+            monsterLev = stageShtData[r][monstersDataCols[i][4]]
+            if isNumberValid(monsterLev):
+                # 获取怪物等级对应的属性
+                rList = getRowData(monsterLev, attrLevCol, attrColsMap[attrType], attrShtData)
+                # 获取关卡对应的属性比例
+                stageType = stageShtData[r][stageDataCols[0]]
+                changeList = getRowData(monsterLev, attrLevCol, attrColsMap[stageType], attrShtData)
+                for j in range(len(changeList)):
+                    rList[j] *= changeList[j]
+                # 获取怪物技能
+                monsterId = stageShtData[r][monstersDataCols[i][1]]
+                monsterSkillList = getRowData(monsterId, mSkillIdCol, mSkillDataCol, mSkillShtData)
+                # 计算怪物最终属性
+                wave = stageShtData[r][monstersDataCols[i][0]]
+                num = stageShtData[r][monstersDataCols[i][2]]
+                playerLev = stageShtData[r][playerLevCol]
+                pList = getMonsterFightAttr(rList, monsterSkillList, playerLev, wave, num, monsterLev)
+            monsterAtrrList.append(pList)
+        monstersAtrrList.append(monsterAtrrList)
+
+    # 计算数据
+    totalList, resultList = getFightResult(playerAtrrList, monstersAtrrList)
+    stageSht.cells(3, stageDataCols[1] + 1).value = totalList
+    for i in range(len(monstersDataCols)):
+        stageSht.cells(3, monstersDataCols[i][5] + 1).value = resultList[i]
+    printer.printGapTime("关卡怪物时长处理完毕，耗时:")
+
+    printer.printColor('~~~所有数据处理完毕~~~', 'green')
+
+
+def getMonsterFightAttr(attrList, skillList, playerLev, wave, num, lev):
+    """根据属性计算获得[波次，数量，有效生命，dps输出，等级]
+
+    Args:
+        attrList (_type_): 属性['生命', '攻击', '防御', '暴击', '暴伤']
+        skillList (_type_): 技能效果['生命加成', '预期DPS']
+        playerLev (_type_): 对方等级
+        wave (_type_): 怪物波次
+        num (_type_): 怪物数量
+        lev (_type_): 怪物等级
+    """
+    reduceHurt = toNum(attrList[2]) / (toNum(attrList[2]) + 1000 + toNum(playerLev) * 12)
+    effectHp = toNum(attrList[0]) * (1 + toNum(skillList[0])) / (1 - reduceHurt)
+    dps = toNum(skillList[1]) * toNum(attrList[1]) * (toNum(attrList[3]) * toNum(attrList[4]) + 1 - toNum(attrList[3]))
+    return [wave, num, int(effectHp), round(dps, 2), lev]
+
+
+def getPlayerFightAttr(attrList, WeaponSkillList, scoreSkillList, deepList):
+    """根据属性计算获得[dps输出，hp，防御，承受伤害]
+
+    Args:
+        attrList (_type_):  属性['生命', '攻击', '防御', '暴击', '暴伤']
+        WeaponSkillList (_type_): 技能效果['生命加成', '预期DPS']
+        scoreSkillList (_type_): 技能效果['生命加成', '预期DPS']
+        deepList (_type_): 深化效果['伤害加成','承受伤害']
+    """
+    returnList = []
+    for i in range(2, len(attrList)):
+        rList = [0] * 4
+        rList[0] = toNum(attrList[i][1]) * (toNum(attrList[i][3]) * toNum(attrList[i][4]) + 1 - toNum(attrList[i][3]))
+        rList[0] *= (toNum(WeaponSkillList[i][1]) + toNum(scoreSkillList[i][1])) * (1 + toNum(deepList[i][0]))
+        rList[0] = round(rList[0], 2)
+        rList[1] = int(toNum(attrList[i][0]) * (2 + toNum(scoreSkillList[i][0]) + toNum(WeaponSkillList[i][0])))
+        rList[2] = toNum(attrList[i][2])
+        rList[3] = toNum(deepList[i][1])
+        returnList.append(rList)
+    return returnList
+
+
+def getFightResult(playerAtrrList, monstersAtrrList):
+    """计算战斗结果
+
+    Args:
+        playerAtrrList (_type_): 玩家属性[dps输出，hp，防御，承受伤害]
+        monstersAtrrList (_type_): 怪物属性[[波次，数量，有效生命，dps输出，lev][..][..]]
+    """
+    # 同一波怪的数量对应生命系数
+    numHpMap = {1: 1, 2: 0.8, 3: 0.7, 4: 0.625, 5: 0.56, 6: 0.5, 7: 0.45, 8: 0.4}
+
+    totalList = []  # [总输出，总生存]
+    resultList = [[], [], []]  # [[输出,生存][..][..]]
+    for i in range(len(playerAtrrList)):
+        tList = [0, 0]
+        waveNumMap = getWaveNumMap(monstersAtrrList[i])
+        for j in range(len(monstersAtrrList[i])):
+            mAttr = monstersAtrrList[i][j]
+            if mAttr[1] > 0:
+                num = waveNumMap[mAttr[0]]
+                mHp = mAttr[1] * mAttr[2] * numHpMap[num]
+                mDps = mAttr[1] * mAttr[3]
+                mTime = round(mHp / playerAtrrList[i][0], 1)  # 怪物存活时间
+                pSufferHurt = 1 - playerAtrrList[i][2] / (playerAtrrList[i][2] + 1000 + 12 * mAttr[4])
+                pSufferHurt *= playerAtrrList[i][3]
+                mHurt = round(mDps * mTime * pSufferHurt / playerAtrrList[i][1], 2)  # 怪物造成伤害占玩家总生命（score+pl）的比例
+                tList[0] += mHurt
+                tList[1] += mTime
+                resultList[j].append([mHurt, mTime])
             else:
-                return -1, insertRow
+                resultList[j].append([0, 0])
+        totalList.append(tList)
 
-        def updateCalcRange():
-            global calcRange
-            global c_indexs
-            calcRange = calcSht.used_range
-            c_indexs = calcRange.columns[c_index_col]
+    return totalList, resultList
 
-        # 验算表插入新的数据
-        def addCalcData(stageId, monsterID, stageType):
-            c_row, insertRow = getDataRow(c_indexs, stageId * 100000 + monsterID)
-            if c_row == -1:
-                print('Insert Line' + toStr(insertRow))
-                calcSht.api.Rows(insertRow).Insert()
-                calcSht.api.Rows(insertRow - 1).Copy(calcSht.api.Rows(insertRow))
-                c_row = insertRow - 1
-                updateCalcRange()
-                calcRange.columns[c_stageId_col][c_row].value = stageId
-                calcRange.columns[c_mID_col][c_row].value = monsterID
-                calcRange.columns[c_stageType_col][c_row].value = stageType
 
-        printer.setStartTime("正在检查验算表数据行是否完整...")
-        # 检测验算表数据行是否完整
-        for s_row in range(2, len(stageRange.rows)):
-            if sv_m1IDs[s_row] is not None:
-                addCalcData(sv_stageIds[s_row], sv_m1IDs[s_row], sv_stageTypes[s_row])
-            if sv_m2IDs[s_row] is not None:
-                addCalcData(sv_stageIds[s_row], sv_m2IDs[s_row], sv_stageTypes[s_row])
-            if sv_m3IDs[s_row] is not None:
-                addCalcData(sv_stageIds[s_row], sv_m3IDs[s_row], sv_stageTypes[s_row])
-        printer.setCompareTime(printer.printGapTime("验算表数据行处理完毕，耗时:"))
+def getWaveNumMap(monstersAtrrList):
+    """获取波次对应怪数量
 
-        c_pLev_col = getDataOrder(cv_columnData, '等级1')
-        c_mProp_col = getDataOrder(cv_columnData, '属性2')
-        c_mLev_col = getDataOrder(cv_columnData, '等级2')
-        cv_pLevs = calcRange.columns[c_pLev_col].value
-        cv_mProps = calcRange.columns[c_mProp_col].value
-        cv_mLevs = calcRange.columns[c_mLev_col].value
+    Args:
+        monstersAtrrList (_type_): 怪物数据
 
-        # 验算表数据输入
-        def updateCalcData(stageId, monsterID, pLev, mProp, mLev):  # yapf:disable
-            c_row, _ = getDataRow(c_indexs, stageId * 100000 + monsterID)
-            cv_pLevs[c_row] = pLev
-            cv_mProps[c_row] = mProp
-            cv_mLevs[c_row] = mLev
-
-        printer.setStartTime("正在更新验算表数据...")
-        # 更新验算表数据
-        for s_row in range(2, len(stageRange.rows)):
-            if sv_m1IDs[s_row] is not None:
-                updateCalcData(sv_stageIds[s_row], sv_m1IDs[s_row], sv_pLevs[s_row], sv_m1Porps[s_row], sv_m1Levs[s_row])
-            if sv_m2IDs[s_row] is not None:
-                updateCalcData(sv_stageIds[s_row], sv_m2IDs[s_row], sv_pLevs[s_row], sv_m2Porps[s_row], sv_m2Levs[s_row])
-            if sv_m3IDs[s_row] is not None:
-                updateCalcData(sv_stageIds[s_row], sv_m3IDs[s_row], sv_pLevs[s_row], sv_m3Porps[s_row], sv_m3Levs[s_row])
-
-        calcSht.cells(1, c_pLev_col + 1).options(transpose=True).value = cv_pLevs
-        calcSht.cells(1, c_mProp_col + 1).options(transpose=True).value = cv_mProps
-        calcSht.cells(1, c_mLev_col + 1).options(transpose=True).value = cv_mLevs
-
-        printer.printGapTime("验算表数据处理完毕，耗时:")
-
-        printer.setStartTime("正在更新关卡怪物时长...")
-        sv_m1Waves = stageRange.columns[getDataOrder(sv_columnData, '波次1')].value
-        sv_m2Waves = stageRange.columns[getDataOrder(sv_columnData, '波次2')].value
-        sv_m3Waves = stageRange.columns[getDataOrder(sv_columnData, '波次3')].value
-
-        s_m1Hurt_col = getDataOrder(sv_columnData, '输出1')
-        s_m1Time_col = getDataOrder(sv_columnData, '生存1')
-        s_m2Hurt_col = getDataOrder(sv_columnData, '输出2')
-        s_m2Time_col = getDataOrder(sv_columnData, '生存2')
-        s_m3Hurt_col = getDataOrder(sv_columnData, '输出3')
-        s_m3Time_col = getDataOrder(sv_columnData, '生存3')
-        s_allHurt_col = getDataOrder(sv_columnData, '总输出')
-        s_allTime_col = getDataOrder(sv_columnData, '总时长')
-        sv_m1Hurts = stageRange.columns[s_m1Hurt_col].value
-        sv_m1Times = stageRange.columns[s_m1Time_col].value
-        sv_m2Hurts = stageRange.columns[s_m2Hurt_col].value
-        sv_m2Times = stageRange.columns[s_m2Time_col].value
-        sv_m3Hurts = stageRange.columns[s_m3Hurt_col].value
-        sv_m3Times = stageRange.columns[s_m3Time_col].value
-        sv_allHurts = stageRange.columns[s_allHurt_col].value
-        sv_allTimes = stageRange.columns[s_allTime_col].value
-
-        c_pTimeLows = calcRange.columns[getDataOrder(cv_columnData, '低系数时长1')].value
-        cv_mTimeLows = calcRange.columns[getDataOrder(cv_columnData, '低系数时长2')].value
-
-        # 返回怪物生存时间，怪物dps
-        def getMonsterTime(stageId, monsterID):
-            c_row, _ = getDataRow(c_indexs, stageId * 100000 + monsterID)
-            return c_pTimeLows[c_row], round(1.0 / cv_mTimeLows[c_row], 4)
-
-        # 更新关卡怪物时长
-        for s_row in range(2, len(stageRange.rows)):
-            if sv_m1IDs[s_row] is not None:
-                sv_m1Times[s_row], sv_m1Hurts[s_row] = getMonsterTime(sv_stageIds[s_row], sv_m1IDs[s_row])
-            if sv_m2IDs[s_row] is not None:
-                sv_m2Times[s_row], sv_m2Hurts[s_row] = getMonsterTime(sv_stageIds[s_row], sv_m2IDs[s_row])
-            if sv_m3IDs[s_row] is not None:
-                sv_m3Times[s_row], sv_m3Hurts[s_row] = getMonsterTime(sv_stageIds[s_row], sv_m3IDs[s_row])
-
-            stageTime = 0
-            stageHurt = 0
-            for i in range(1, 4):
-                waveTime = 0
-                waveNum = 0
-                if sv_m1Waves[s_row] == i:
-                    for _ in range(int(sv_m1Nums[s_row])):
-                        waveTime += sv_m1Times[s_row] / 2 * 0.7**waveNum
-                        waveNum += 1
-                if sv_m2Waves[s_row] == i:
-                    for _ in range(int(sv_m2Nums[s_row])):
-                        waveTime += sv_m2Times[s_row] / 2 * 0.7**waveNum
-                        waveNum += 1
-                if sv_m3Waves[s_row] == i:
-                    for _ in range(int(sv_m3Nums[s_row])):
-                        waveTime += sv_m3Times[s_row] / 2 * 0.7**waveNum
-                        waveNum += 1
-                waveHurt = 0
-                if sv_m1Waves[s_row] == i:
-                    waveHurt += sv_m1Hurts[s_row] * sv_m1Nums[s_row] * waveTime
-                if sv_m2Waves[s_row] == i:
-                    waveHurt += sv_m2Hurts[s_row] * sv_m2Nums[s_row] * waveTime
-                if sv_m3Waves[s_row] == i:
-                    waveHurt += sv_m3Hurts[s_row] * sv_m3Nums[s_row] * waveTime
-                stageTime += waveTime
-                stageHurt += waveHurt
-            sv_allHurts[s_row] = round(stageHurt, 2)
-            sv_allTimes[s_row] = stageTime
-
-        stageSht.cells(1, s_m1Hurt_col + 1).options(transpose=True).value = sv_m1Hurts
-        stageSht.cells(1, s_m1Time_col + 1).options(transpose=True).value = sv_m1Times
-        stageSht.cells(1, s_m2Hurt_col + 1).options(transpose=True).value = sv_m2Hurts
-        stageSht.cells(1, s_m2Time_col + 1).options(transpose=True).value = sv_m2Times
-        stageSht.cells(1, s_m3Hurt_col + 1).options(transpose=True).value = sv_m3Hurts
-        stageSht.cells(1, s_m3Time_col + 1).options(transpose=True).value = sv_m3Times
-        stageSht.cells(1, s_allHurt_col + 1).options(transpose=True).value = sv_allHurts
-        stageSht.cells(1, s_allTime_col + 1).options(transpose=True).value = sv_allTimes
-        printer.printGapTime("关卡怪物时长处理完毕，耗时:")
-
-        printer.printColor('~~~所有数据处理完毕~~~', 'green')
-    finally:
-        app.screen_updating = True
-        app.display_alerts = True
+    Returns:
+        _type_: 波次对应怪数量字典
+    """
+    waveNumMap = {}
+    for i in range(1, 4):
+        for attr in monstersAtrrList:
+            if attr[0] == i:
+                if i in waveNumMap:
+                    waveNumMap[i] += attr[1]
+                else:
+                    waveNumMap[i] = attr[1]
+    return waveNumMap
