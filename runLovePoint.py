@@ -15,7 +15,6 @@ try:
         print("执行脚本：" + p)
         if p == 'lovePoint':
             lovePoint.main()
-            input("Press Enter To Exit...")
         elif p == 'lovePointRandomDrop':
             lovePointRandomDrop.main()
         elif p == 'lovePointTask':
@@ -24,10 +23,8 @@ try:
             lovePointDraw.main()
         elif p == 'lovePointLev':
             lovePointLev.main()
-            input("Press Enter To Exit...")
         else:
-            print("未找到可执行脚本")
-
+            input("未找到可执行脚本:" + p)
 except BaseException:
     traceback.print_exc()
     input("Error...")

@@ -15,11 +15,10 @@ try:
             stageTimeCalc.main()
         if p == 'copyData':
             copyData.main()
-            input("Press Enter To Exit...")
         if p == 'propertyCalc':
             propertyCalc.main()
         else:
-            print("未找到可执行脚本:" + p)
+            input("未找到可执行脚本:" + p)
 
 except BaseException:
     traceback.print_exc()

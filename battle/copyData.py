@@ -35,4 +35,5 @@ def main():
                 if sht.cells(3, j).raw_value == dataSht.cells(3, i).raw_value:
                     copyValue = sht.range(sht.cells(4, j), sht.cells(lastC.row, j)).value
                     dataSht.cells(4, i).options(transpose=True).value = copyValue
+                    break
         wb.close()

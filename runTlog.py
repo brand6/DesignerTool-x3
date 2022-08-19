@@ -14,9 +14,8 @@ try:
             tlog.main()
         elif p == 'tlogAll':
             tlogAll.main()
-            input("Press Enter To Exit...")
         else:
-            print("未找到可执行脚本")
+            input("未找到可执行脚本:" + p)
 except BaseException:
     traceback.print_exc()
     input("Error...")

@@ -10,16 +10,15 @@ try:
     if len(sys.argv) == 1:
         miaoCardAIAction.main()
     for p in sys.argv[1:]:
+        print("执行脚本：" + p)
         if p == 'miaoCardAIAction':
             miaoCardAIAction.main()
         elif p == 'miaoCardInit':
             miaoCardInit.main()
         elif p == 'miaoCardWinRate':
-            print("执行脚本：" + p)
             miaoCardWinRate.main()
-            input("Press Enter To Exit...")
         else:
-            print("未找到可执行脚本")
+            input("未找到可执行脚本:" + p)
 except BaseException:
     traceback.print_exc()
     input("Error...")

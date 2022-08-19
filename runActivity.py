@@ -12,8 +12,7 @@ try:
         if p == 'activityResStatistic':
             activityResStatistic.main()
         else:
-            print("未找到可执行脚本")
-    input("Press Enter To Exit...")
+            input("未找到可执行脚本:" + p)
 except BaseException:
     traceback.print_exc()
     input("Error...")
