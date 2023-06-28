@@ -2,17 +2,17 @@ import random
 
 
 # 脚本说明：
-# 旧版抽卡掉率
+# 旧版新手池抽卡掉率
 #
 def main():
-    drawTimes = 10000000
+    drawTimes = 100000  # 模拟10W玩家60抽的结果
     rateList = [40, 80, 240, 480, 9160]  # ssr-score,ssr-card,sr-score,sr-card,r-card
     SSRRateList = [3333, 6667]  # ssr-score,ssr-card
     SRRateList = [40, 80, 3293, 6587]  # ssr-score,ssr-card,sr-score,sr-card
-    upCount = 50
+    upCount = 60  # 新手池不触发up
     upPara = [333, 667, -24, -49, -927]  # 50抽不出SSR，开始概率递增，每次递增10%
     SRUpPara = [333, 667, -333, -667]  # 保底时的概率递增
-    guaranteeMap = {3: 0, 60: 0, 10: 0}  # 3抽SSR必出角色保底，60抽必出SSR保底，10抽必出SR+保底
+    guaranteeMap = {3: 0, 60: 0, 10: 0}  # 3抽SSR必出角色保底，（60抽必出SSR保底：无），10抽必出SR+保底
     resultMap = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
 
     def getCurRateList(count, rateList, upPara):
@@ -73,20 +73,25 @@ def main():
             else:
                 rndNum -= rateList[j]
 
-    for i in range(drawTimes):
-        if guaranteeMap[60] >= 59:
-            Draw(SSRRateList)
-        elif guaranteeMap[10] >= 9:
-            curRateList = getCurRateList(guaranteeMap[60], SRRateList, SRUpPara)
-            Draw(curRateList)
+    for _ in range(drawTimes):
+        for _ in range(60):
+            if guaranteeMap[60] >= 60:
+                Draw(SSRRateList)
+            elif guaranteeMap[10] >= 9:
+                curRateList = getCurRateList(guaranteeMap[60], SRRateList, SRUpPara)
+                Draw(curRateList)
+            else:
+                curRateList = getCurRateList(guaranteeMap[60], rateList, upPara)
+                Draw(curRateList)
         else:
-            curRateList = getCurRateList(guaranteeMap[60], rateList, upPara)
-            Draw(curRateList)
+            guaranteeMap[60] = 0
+            guaranteeMap[10] = 0
+            guaranteeMap[3] = 0
 
     totalNum = 0
     for k in resultMap:
         totalNum += resultMap[k]
-        resultMap[k] = str(round(resultMap[k] / drawTimes * 100, 2)) + '%'
+        resultMap[k] = str(round(resultMap[k] / drawTimes / 60 * 100, 2)) + '%'
 
-    print(str(totalNum / 10000) + ' 万抽结果')
+    print(str(totalNum / 10000) + ' 万人60抽结果')
     print(resultMap)

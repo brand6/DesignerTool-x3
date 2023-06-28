@@ -4,12 +4,9 @@ import csv
 titleList = [
     'Field',
     'Type',
-    'Collation',
     'Null',
     'Key',
     'Default',
-    'Extra',
-    'Privileges',
     'Comment',
 ]
 
@@ -30,12 +27,9 @@ def addRowData(dataList, field, type, comment):
     rowMap = {
         'Field': field,
         'Type': type,
-        'Collation': typeCollationMap[type],
         'Null': 'NO',
         'Key': 'MUL' if field in keyList else '',
         'Default': 'NULL',
-        'Extra': '',
-        'Privileges': 'select,insert,update,references',
         'Comment': comment,
     }
     dataList.append(rowMap)
@@ -62,8 +56,9 @@ def main():
             addRowData(dataList, row[1], row[2], row[3])
 
     csvName = activeSht.range('B1').value
+    csvDesc = activeSht.range('A1').value
     if csvName is not None and csvName != '':
-        with open(folderPath + csvName + '.csv', mode='w', encoding='utf-8-sig', newline='') as f:
+        with open(folderPath + csvName + r'@@' + csvDesc + '.csv', mode='w', encoding='utf-8', newline='') as f:
             writer = csv.DictWriter(f, titleList)
             writer.writeheader()
             writer.writerows(dataList)

@@ -23,6 +23,7 @@ def main():
         '{5}': (None, '5', '6', '7', '8', '9'),
         '{09}': (None, '09', '10', '11', '12', '13'),
         '{光}': (None, '光', '冰', '3', '4', '火'),
+        '{1004}': (None, '1004', '1005', '1007', '1008', '1006'),
     }
 
     try:
@@ -55,8 +56,6 @@ def main():
             if dataValues[r][0] is not None:
                 for i in range(1, 6):
                     # 处理不导出字段
-                    if roleMap[i] == 0:
-                        taskValues[(r - 1) * 5 + i][skipCol] = 1
                     for d in range(len(dv_columnData)):
                         if dv_columnData[d] is not None:
                             c = getDataOrder(cv_columnData, dv_columnData[d])
@@ -64,6 +63,8 @@ def main():
                                 taskValues[(r - 1) * 5 + i][c] = dataValues[r][d]
                             else:
                                 taskValues[(r - 1) * 5 + i][c] = replaceStr(dataValues[r][d], i)
+                    if roleMap[i] == 0:
+                        taskValues[(r - 1) * 5 + i][skipCol] = 1
 
         xw.sheets['任务配置'].cells(1, 1).value = taskValues
         xw.sheets['任务配置'].activate()

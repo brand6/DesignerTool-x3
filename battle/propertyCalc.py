@@ -7,6 +7,10 @@ getColBy2Para = common.getColBy2Para
 getColBy3Para = common.getColBy3Para
 getRowData = common.getRowData
 
+# 脚本说明：
+# 用于根据搭配计算男主属性
+#
+
 
 def main():
     activeWb = xw.books.active
@@ -22,6 +26,7 @@ def main():
     scoreLevs = roleRng.columns[scoreLevCol].value
     scoreIds = roleRng.columns[scoreIdCol].value
     scorePropertys = getScoreProperty(scoreIds, scoreLevs, propertyData)
+    girlPropertys = getScoreProperty(scoreIds, scoreLevs, propertyData)
 
     # 思念属性
     cardLevCol = getColBy2Para('思念', '等级', roleData)
@@ -36,6 +41,7 @@ def main():
             idList.append(roleData[i][cardIdCol[j]])
         cardIds.append(idList)
     cardPropertys = getCardProperty(cardIds, cardLevs, cardPhases, propertyData)
+    girlCardPropertys = getCardProperty(cardIds, cardLevs, cardPhases, propertyData, isGirl=True)
     # 思念：计算属性加成
     for i in range(len(scorePropertys)):
         for j in range(3):
@@ -62,23 +68,25 @@ def main():
         gemMainAttrs.append(mianList)
         gemSubAttrs.append(subList)
     gemPropertys = getGemProperty(gemIds, gemLevs, gemMainAttrs, gemSubAttrs, propertyData)
+    girlGemPropertys = getGirlGemProperty(gemIds, gemLevs, propertyData)
     # 芯核：计算属性加成
     for i in range(len(scorePropertys)):
         for j in range(3):
             gemPropertys[i][j] += scorePropertys[i][j] * gemPropertys[i][j + 5] / 1000
-
-    # 牵绊度属性
-    loveLevCol = getColBy2Para('牵绊度', '等级', roleData)
-    loveLevs = roleRng.columns[loveLevCol].value
-    lovePropertys = getLoveProperty(loveLevs, propertyData)
+            girlGemPropertys[i][j] += girlPropertys[i][j] * girlGemPropertys[i][j + 5] / 1000
 
     # 计算属性和
     for i in range(len(scorePropertys)):
         for j in range(len(scorePropertys[0])):
             if common.isNumber(scorePropertys[i][j]):
-                scorePropertys[i][j] += int(cardPropertys[i][j]) + int(gemPropertys[i][j]) + lovePropertys[i][j]
-    resultCol = getColBy2Para('面板属性', '生命', roleData)
+                scorePropertys[i][j] += int(cardPropertys[i][j]) + int(gemPropertys[i][j])
+                girlPropertys[i][j] += int(girlCardPropertys[i][j]) + int(girlGemPropertys[i][j])
+                if j == 3:
+                    girlPropertys[i][j] += int(scorePropertys[i][j] * 0.4)
+    resultCol = getColBy2Para('男主属性', '生命', roleData)
     roleSht.cells(3, resultCol + 1).value = scorePropertys
+    girlCol = getColBy2Para('女主属性', '生命', roleData)
+    roleSht.cells(3, girlCol + 1).value = girlPropertys
 
 
 def getScoreProperty(ids: list, levs: list, propertyData: list):
@@ -98,7 +106,7 @@ def getScoreProperty(ids: list, levs: list, propertyData: list):
     levColList = getColBy3Para('SCore.xlsx', 'SCoreLevel', ['PropMaxHP', 'PropPhyAtk', 'PropPhyDef', 'PropCritVal'],
                                propertyData)
     starIdCol = getColBy3Para('SCore.xlsx', 'SCoreStar', 'ID', propertyData)
-    starColList = getColBy3Para('SCore.xlsx', 'SCoreStar', ['AddMaxHP', 'AddPhyAtk', 'AddPhyDef'], propertyData)
+    starColList = getColBy3Para('SCore.xlsx', 'SCoreStar', ['AddMaxHP', 'AddPhyAtk', 'AddPhyDef', 'AddCritVal'], propertyData)
     awakeIdCol = getColBy3Para('SCore.xlsx', 'SCoreAwake', 'ID', propertyData)
     awakeColList = getColBy3Para('SCore.xlsx', 'SCoreAwake', ['AddMaxHP', 'AddPhyAtk', 'AddPhyDef'], propertyData)
 
@@ -109,7 +117,7 @@ def getScoreProperty(ids: list, levs: list, propertyData: list):
             levId = ids[i] * 1000 + levs[i]
             tList = getRowData(levId, levIdCol, levColList, propertyData)
             for j in range(len(tList)):
-                pList[j] += tList[j]
+                pList[j] += common.toNum(tList[j])
             # 突破属性
             starId = ids[i] * 1000 + int((levs[i] - 1) / 10) + 1
             tList = getRowData(starId, starIdCol, starColList, propertyData)
@@ -126,7 +134,7 @@ def getScoreProperty(ids: list, levs: list, propertyData: list):
     return propertys
 
 
-def getCardProperty(ids: list, levs: list, phases: list, propertyData: list):
+def getCardProperty(ids: list, levs: list, phases: list, propertyData: list, isGirl=False):
     """获取思念的属性
 
     Args:
@@ -144,7 +152,14 @@ def getCardProperty(ids: list, levs: list, phases: list, propertyData: list):
     baseTemplateCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', 'Template', propertyData)
     baseStarCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', 'StarID', propertyData)
     basePhaseCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', 'PhaseMode', propertyData)
-    baseSpAttrCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', ['SpecialAttrType', 'SpecialAttrValue'], propertyData)
+    if isGirl:
+        baseSpAttrCol = getColBy3Para('PLPropertyCalc.xlsx', 'PLCardLevel', ['SpecialAttrType', 'SpecialAttrValue'],
+                                      propertyData)
+        basePosCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', 'PosType', propertyData)
+        baseQualityCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', 'Quality', propertyData)
+        checkCol = getColBy3Para('PLPropertyCalc.xlsx', 'PLCardLevel', 'ID', propertyData)
+    else:
+        baseSpAttrCol = getColBy3Para('Card.xlsx', 'CardBaseInfo', ['SpecialAttrType', 'SpecialAttrValue'], propertyData)
     baseColList = getColBy3Para('Card.xlsx', 'CardBaseInfo', ['MaxHPRate', 'PhyAttackRate', 'PhyDefenceRate'], propertyData)
     tempIdColList = getColBy3Para('Card.xlsx', 'CardTemplate', ['Template', 'Level'], propertyData)
     tempColList = getColBy3Para('Card.xlsx', 'CardTemplate', ['PropMaxHP', 'PropPhyAtk', 'PropPhyDef'], propertyData)
@@ -182,7 +197,13 @@ def getCardProperty(ids: list, levs: list, phases: list, propertyData: list):
                         for j in range(len(tList)):
                             rList[j] *= (1 + common.toInt(rateList[j]) / 1000)
                     # 附加属性
-                    spAttrList = getRowData(id, baseIdCol, baseSpAttrCol, propertyData)
+                    if isGirl:
+                        pos = getRowData(id, baseIdCol, basePosCol, propertyData)
+                        quality = getRowData(id, baseIdCol, baseQualityCol, propertyData)
+                        checkId = 1000 + pos * 100 + quality * 10
+                        spAttrList = getRowData(checkId, checkCol, baseSpAttrCol, propertyData)
+                    else:
+                        spAttrList = getRowData(id, baseIdCol, baseSpAttrCol, propertyData)
                     if spAttrList[0] in pMap:
                         attrValueList = spAttrList[1].split('|')
                         rList[pMap[spAttrList[0]]] += int(attrValueList[starLev - 1])
@@ -265,28 +286,54 @@ def getGemProperty(ids: list, levs: list, mainAttrs: list, subAttrs: list, prope
     return propertys
 
 
-def getLoveProperty(levs: list, propertyData: list):
-    """获取牵绊度的属性
+def getGirlGemProperty(ids: list, levs: list, propertyData: list):
+    """获取芯核的属性
 
     Args:
-        levs (list): 牵绊度的等级
+        ids (list): gem的id
+        levs (list): gem的等级
         propertyData (list): 属性表数据
 
     return:
-        propertys: 属性列表[[生命，攻击，防御，暴击，暴伤]]
+        propertys: 属性列表[[生命，攻击，防御，暴击，暴伤，生命加成，攻击加成，防御加成]]
     """
+    pMap = {'1': 0, '2': 1, '3': 2, '4': 3, '6': 4, '101': 5, '102': 6, '103': 7}
 
+    baseIdCol = getColBy3Para('GemCore.xlsx', 'GemCoreBaseInfo', 'ItemID', propertyData)
+    qualityCol = getColBy3Para('GemCore.xlsx', 'GemCoreBaseInfo', 'Rare', propertyData)
+    posCol = getColBy3Para('GemCore.xlsx', 'GemCoreBaseInfo', 'SiteID', propertyData)
+    idCol = getColBy3Para('PLPropertyCalc.xlsx', 'PLGemCore', 'ID', propertyData)
+    propertyCol = getColBy3Para('PLPropertyCalc.xlsx', 'PLGemCore',
+                                ['PropMaxHP', 'PropPhyAtk', 'PropPhyDef', 'PropCritVal', 'CritHurtAdd', 'SpecialAttr'],
+                                propertyData)
+    baseSuitCol = getColBy3Para('GemCore.xlsx', 'GemCoreBaseInfo', 'SuitID', propertyData)
+    suitIdCol = getColBy3Para('GemCore.xlsx', 'GemCoreSuit', 'SuitID', propertyData)
+    suitAttrCol = getColBy3Para('GemCore.xlsx', 'GemCoreSuit', 'AttrNum', propertyData)
     propertys = []
-    levIdCol = getColBy3Para('LovePointLevel.xlsx', 'LovePointLevel', 'ID', propertyData)
-    levColList = getColBy3Para('LovePointLevel.xlsx', 'LovePointLevel', ['PropMaxHP', 'PropPhyAtk', 'PropPhyDef'], propertyData)
-
-    for i in range(2, len(levs)):
-        pList = [0] * 5  # 放在判断外，保证数据行不错位
-        if levs[i] is not None and common.isNumberValid(levs[i]):
-            # 升级属性
-            tList = getRowData(levs[i], levIdCol, levColList, propertyData)
-            for j in range(len(tList)):
-                pList[j] += tList[j]
-            # 添加属性值到列表
-            propertys.append(pList)
+    for i in range(2, len(ids)):
+        pList = [0] * 8  # 放在判断外，保证数据行不错位
+        if levs[i] is not None and levs[i] > 0:
+            for j in range(len(ids[0])):
+                if ids[i][j] is not None and common.isNumber(ids[i][j]):
+                    # 主属性
+                    quality = getRowData(ids[i][j], baseIdCol, qualityCol, propertyData)
+                    pos = getRowData(ids[i][j], baseIdCol, posCol, propertyData)
+                    id = 10000 + quality * 1000 + pos * 100 + levs[i]
+                    attList = getRowData(id, idCol, propertyCol, propertyData)
+                    for m in range(5):
+                        pList[m] += common.toNum(attList[m])
+                    if attList[5] is not None:
+                        specailAtts = str.split(attList[5], '|')
+                        for specailAtt in specailAtts:
+                            att = str.split(specailAtt, '=')
+                            pList[pMap[att[0]]] += int(att[1])
+                    # 套装
+                    if j == 0:
+                        suitId = getRowData(ids[i][j], baseIdCol, baseSuitCol, propertyData)
+                        suitAttr = getRowData(suitId, suitIdCol, suitAttrCol, propertyData).split('=')
+                        suitAttrType = common.toStr(suitAttr[0])
+                        suitAttrValue = int(suitAttr[1])
+                        pList[pMap[suitAttrType]] += suitAttrValue
+        # 添加属性值到列表
+        propertys.append(pList)
     return propertys

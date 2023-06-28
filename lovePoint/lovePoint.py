@@ -38,9 +38,13 @@ def main():
         d_itemType_col = getDataOrder(dv_columnData, '道具奖励Type')
         d_itemID_col = getDataOrder(dv_columnData, '道具奖励ID')
         d_itemNum_col = getDataOrder(dv_columnData, '道具奖励数量')
-        d_ResType1_col = getDataOrder(dv_columnData, '解锁内容1')
-        d_ResType2_col = getDataOrder(dv_columnData, '解锁内容2')
-        d_ResType3_col = getDataOrder(dv_columnData, '解锁内容3')
+        d_ResType1_col = getDataOrder(dv_columnData, '解锁内容额外1')
+        d_ResType2_col = getDataOrder(dv_columnData, '解锁内容额外2')
+        d_STResType_col = getDataOrder(dv_columnData, '解锁内容ST')
+        d_YSResType_col = getDataOrder(dv_columnData, '解锁内容YS')
+        d_3ResType_col = getDataOrder(dv_columnData, '解锁内容3')
+        d_4ResType_col = getDataOrder(dv_columnData, '解锁内容4')
+        d_RYResType_col = getDataOrder(dv_columnData, '解锁内容RY')
         d_STResID_col = getDataOrder(dv_columnData, 'ST解锁内容ID')
         d_YSResID_col = getDataOrder(dv_columnData, 'YS解锁内容ID')
         d_3ResID_col = getDataOrder(dv_columnData, '3解锁内容ID')
@@ -55,6 +59,23 @@ def main():
                 app.books.open(tablePath + "\\" + wbName, 0)
         loveWb = xw.books.open(tablePath + "\\" + "LovePointLevel.xlsx", 0)
         printer.setCompareTime(printer.printGapTime("表格打开完毕，耗时:"))
+        periodMap = {}
+        periodSht = loveWb.sheets['LovePointPeriod']
+        periodData = periodSht.used_range.value
+        idCol = getDataOrder(periodData[2], 'ID')
+        nameCol = getDataOrder(periodData[2], 'PeriodName')
+        for i in range(3, len(periodData)):
+            periodMap[periodData[i][idCol]] = periodData[i][nameCol]
+
+        levMap = {}
+        levSht = loveWb.sheets['LovePointLevel']
+        levData = levSht.used_range.value
+        idCol = getDataOrder(levData[2], 'ID')
+        levCol = getDataOrder(levData[2], 'Level')
+        periodCol = getDataOrder(levData[2], 'PeriodID')
+        for i in range(3, len(levData)):
+            levMap[levData[i][idCol]] = [levData[i][levCol], levData[i][periodCol]]
+
         loveSht = loveWb.sheets['LovePointReward']
         loveRange = loveSht.used_range
 
@@ -138,25 +159,25 @@ def main():
                 rewards = []
                 # 资源奖励
                 if i == 1:
-                    rewards = getRewardData(itemMap, wbChangeMap, row[d_ResType1_col], row[d_ResType2_col], row[d_ResType3_col],
-                                            row[d_STResID_col], row[d_itemType_col], row[d_itemID_col], row[d_itemNum_col], i,
-                                            lev)
+                    rewards = getRewardData(itemMap, wbChangeMap, row[d_STResType_col], row[d_ResType1_col],
+                                            row[d_ResType2_col], row[d_STResID_col], row[d_itemType_col], row[d_itemID_col],
+                                            row[d_itemNum_col], i, lev, periodMap, levMap)
                 elif i == 2:
-                    rewards = getRewardData(itemMap, wbChangeMap, row[d_ResType1_col], row[d_ResType2_col], row[d_ResType3_col],
-                                            row[d_YSResID_col], row[d_itemType_col], row[d_itemID_col], row[d_itemNum_col], i,
-                                            lev)
+                    rewards = getRewardData(itemMap, wbChangeMap, row[d_YSResType_col], row[d_ResType1_col],
+                                            row[d_ResType2_col], row[d_YSResID_col], row[d_itemType_col], row[d_itemID_col],
+                                            row[d_itemNum_col], i, lev, periodMap, levMap)
                 elif i == 3:
-                    rewards = getRewardData(itemMap, wbChangeMap, row[d_ResType1_col], row[d_ResType2_col], row[d_ResType3_col],
+                    rewards = getRewardData(itemMap, wbChangeMap, row[d_3ResType_col], row[d_ResType1_col], row[d_ResType2_col],
                                             row[d_3ResID_col], row[d_itemType_col], row[d_itemID_col], row[d_itemNum_col], i,
-                                            lev)
+                                            lev, periodMap, levMap)
                 elif i == 4:
-                    rewards = getRewardData(itemMap, wbChangeMap, row[d_ResType1_col], row[d_ResType2_col], row[d_ResType3_col],
+                    rewards = getRewardData(itemMap, wbChangeMap, row[d_4ResType_col], row[d_ResType1_col], row[d_ResType2_col],
                                             row[d_4ResID_col], row[d_itemType_col], row[d_itemID_col], row[d_itemNum_col], i,
-                                            lev)
+                                            lev, periodMap, levMap)
                 else:
-                    rewards = getRewardData(itemMap, wbChangeMap, row[d_ResType1_col], row[d_ResType2_col], row[d_ResType3_col],
-                                            row[d_RYResID_col], row[d_itemType_col], row[d_itemID_col], row[d_itemNum_col], i,
-                                            lev)
+                    rewards = getRewardData(itemMap, wbChangeMap, row[d_RYResType_col], row[d_ResType1_col],
+                                            row[d_ResType2_col], row[d_RYResID_col], row[d_itemType_col], row[d_itemID_col],
+                                            row[d_itemNum_col], i, lev, periodMap, levMap)
                 updateList(id, rewards)
 
         loveSht.cells(1, l_reward_col + 1).options(transpose=True).value = lv_reward
@@ -184,7 +205,8 @@ def main():
         printer.setCompareTime(printer.printGapTime("数据处理完毕，耗时:"))
 
 
-def getRewardData(itemMap, wbChangeMap, resType, resType2, resType3, resId, itemType, itemId, itemNum, role, lev):
+def getRewardData(itemMap, wbChangeMap, resType, resType2, resType3, resId, itemType, itemId, itemNum, role, lev, periodMap,
+                  levMap):
     """获取牵绊度等级对应奖励
 
     Args:
@@ -222,21 +244,38 @@ def getRewardData(itemMap, wbChangeMap, resType, resType2, resType3, resId, item
                 reward['reward'] = ''
                 reward['order'] = order
                 if itemMap[resType]['无需掉落'] == 1:  # 纯文本描述
-                    reward['desc'] = getRewardDesc(itemMap, wbChangeMap, resType, id, role=role, lev=lev)
+                    reward['desc'] = getRewardDesc(itemMap,
+                                                   wbChangeMap,
+                                                   resType,
+                                                   id,
+                                                   role=role,
+                                                   lev=lev,
+                                                   periodMap=periodMap,
+                                                   levMap=levMap)
                 elif common.isNumberValid(id):  # >0的id有效
                     reward['reward'] = getReward(itemMap[resType]['奖励类型'], id)
                     if reward['reward'] != '':
-                        reward['desc'] = getRewardDesc(itemMap, wbChangeMap, resType, id, role=role, lev=lev)
+                        reward['desc'] = getRewardDesc(itemMap,
+                                                       wbChangeMap,
+                                                       resType,
+                                                       id,
+                                                       role=role,
+                                                       lev=lev,
+                                                       periodMap=periodMap,
+                                                       levMap=levMap)
+                elif '=' in toStr(id):  # 固定道具id
+                    reward['reward'] = id
+                    reward['desc'] = ''
                 elif common.isNumberValid(itemId):  # id无效时取道具id填充
                     resType = '道具'
                     reward['reward'] = toStr(itemType) + '=' + toStr(itemId) + '=' + toStr(itemNum)
-                    reward['desc'] = getRewardDesc(itemMap, wbChangeMap, resType, itemId, itemNum)
+                    reward['desc'] = ''
                 reward['type'] = itemMap[resType]['奖励类型']
                 rewards.append(reward)
     return rewards
 
 
-def getRewardDesc(itemMap, wbChangeMap, itemType, itemID, role=0, lev=0):
+def getRewardDesc(itemMap, wbChangeMap, itemType, itemID, role=0, lev=0, periodMap={}, levMap={}):
     """获取奖励描述
 
     Args:
@@ -270,7 +309,7 @@ def getRewardDesc(itemMap, wbChangeMap, itemType, itemID, role=0, lev=0):
             r_name_col = getDataOrder(rv_column, itemMap[itemType]['描述字段'])
             if itemType == '闲聊':
                 desc = itemMap[itemType]['文字描述'].format(r_reward.columns[r_name_col][r_row].value,
-                                                        int(1 + itemMap[itemType]['奖励计数']))
+                                                        int(0 + itemMap[itemType]['奖励计数']))
             elif '{' in itemMap[itemType]['文字描述']:
                 desc = itemMap[itemType]['文字描述'].format(r_reward.columns[r_name_col][r_row].value)
             else:
@@ -279,12 +318,20 @@ def getRewardDesc(itemMap, wbChangeMap, itemType, itemID, role=0, lev=0):
         # 修改来源描述
         if r_row != -1 and itemMap[itemType]['来源字段'] is not None:
             r_desc_col = getDataOrder(rv_column, itemMap[itemType]['来源字段'])
-            setRewardScource(wbChangeMap, itemMap[itemType]['奖励表'], rewardSht, itemMap[itemType]['来源类型'], r_row + 1,
-                             r_desc_col + 1, role, lev)
+            setRewardScource(wbChangeMap,
+                             itemMap[itemType]['奖励表'],
+                             rewardSht,
+                             itemMap[itemType]['来源类型'],
+                             r_row + 1,
+                             r_desc_col + 1,
+                             role,
+                             lev,
+                             periodMap=periodMap,
+                             levMap=levMap)
     return desc
 
 
-def setRewardScource(wbChangeMap, wbName, rewardSht, scourceType, row, desc_col, role, lev):
+def setRewardScource(wbChangeMap, wbName, rewardSht, scourceType, row, desc_col, role, lev, periodMap={}, levMap={}):
     """更新奖励道具的来源说明
 
     Args:
@@ -297,11 +344,16 @@ def setRewardScource(wbChangeMap, wbName, rewardSht, scourceType, row, desc_col,
         role (int): 男主id
         lev (int): 牵绊度等级
     """
+    # showLev = levMap[lev][0]
+    # showName = periodMap[levMap[lev][1]]
     # 修改来源描述
     if scourceType == 0:
-        desc = '{Role' + toStr(role) + '}牵绊度达到' + toStr(lev) + '级'
+        # desc = '{Role' + toStr(role) + '}牵绊度等级提升至[' + showName + toStr(showLev) + ']'
+        desc = '{Role' + toStr(role) + '}牵绊度等级提升至[{lovepointlevel=' + toStr(lev) + '}]'
     elif scourceType == 1:
         desc = int(lev)
+    elif scourceType == 2:
+        desc = (role + 2) * 100 + lev
     if rewardSht.cells(row, desc_col).value != desc:
         wbChangeMap[wbName] = 1
         rewardSht.cells(row, desc_col).value = desc
@@ -362,6 +414,8 @@ def splitId(idStr: str):
         for i in range(len(ids)):
             ids[i] = toInt(ids[i])
         return ids
+    elif '=' in idStr:  # 道具
+        return [idStr]
     else:  # 同类型资源只有1个
         return [toInt(idStr)]
 

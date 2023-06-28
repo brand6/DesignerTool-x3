@@ -17,9 +17,11 @@ def main():
     paraList = getDataList(paraRange, "基础参数", -1)
     paraDict = getParaDict(paraList)
     roleNum = paraDict["男主数量"]
+    hangNumList = [-1, 0, 0, paraDict["挂机SSR羁绊"], paraDict["挂机SR羁绊"], paraDict["挂机R羁绊"]]
     ItemList = getDataList(paraRange, "养成参数", -1)
     itemsDict = getItemsDict(ItemList)
     timesList = getDataList(paraRange, "抽卡次数", playExtendNum)
+    dayList = getDataList(paraRange, "日期", 0)
 
     for i in range(1, len(ItemList)):
         numList = []
@@ -31,11 +33,12 @@ def main():
             rowList = []
             for n in range(len(timesList[m])):
                 drawTimes = timesList[m][n]
-                if drawTimes < drawExcept:  # 第一个卡不算男主数量
-                    num = drawTimes * drawRate
+                firstCardExcept = drawExcept * 2  # 第二次出货为想要男主的卡
+                if drawTimes < firstCardExcept:
+                    num = drawTimes / firstCardExcept
                 else:
-                    num = 1 + (drawTimes - drawExcept) * drawRate / roleNum
-                num = num + initNum
+                    num = 1 + (drawTimes - firstCardExcept) * drawRate / roleNum
+                num = num + initNum + hangNumList[i] * dayList[m] / roleNum
                 if num > 100:
                     num = int(num)
                 elif num > 10:
@@ -116,11 +119,11 @@ def getItemsDict(itemList: list):
         dict: 参数字典
     """
     itemsDict = {}
-    for i in range(1, len(itemList)):
+    for j in range(1, len(itemList[0])):
         itemDict = {}
-        for j in range(1, len(itemList[i])):
-            itemDict[itemList[0][j]] = itemList[i][j]
-        itemsDict[itemList[i][0]] = itemDict
+        for i in range(1, len(itemList)):
+            itemDict[itemList[i][0]] = itemList[i][j]
+        itemsDict[itemList[0][j]] = itemDict
     return itemsDict
 
 

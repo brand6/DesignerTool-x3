@@ -1,6 +1,6 @@
-c = []
-a = [[1, 1], [2, 2]]
-b = [[1, 1], [2, 2]]
-c.append(a)
-c.append(b)
-print(c)
+import xlwings as xw
+
+sht = xw.sheets.active
+data = sht.used_range.value
+
+sht['4:5'].delete('up')

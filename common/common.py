@@ -3,6 +3,26 @@ from tkinter import filedialog
 import xlwings as xw
 
 
+def getDataOrders(findList: list, findValue):
+    """在一维list或元组内查找数据所在的所有行，未找到时返回空列表
+
+    Args:
+        findList (list): 数组或元组
+        findValue (_type_): 查找的数据
+
+    Returns:
+        _type_: _description_
+    """
+    returnList = []
+    for i in range(len(findList)):
+        if findList[i] == findValue:
+            returnList.append(i)
+        elif toStr(findList[i]) == toStr(findValue):
+            returnList.append(i)
+
+    return returnList
+
+
 def getDataOrder(findList: list, findValue):
     """在一维list或元组内查找数据所在的index，未找到时返回-1
 
@@ -15,6 +35,8 @@ def getDataOrder(findList: list, findValue):
     """
     for i in range(len(findList)):
         if findList[i] == findValue:
+            return i
+        elif toStr(findList[i]) == toStr(findValue):
             return i
     else:
         return -1
@@ -154,7 +176,7 @@ def getRowData(id, idCol, returnCol, findData: list):
         for row in findData:
             matchTag = True
             for i in range(len(id)):
-                if id[i] != row[idCol[i]]:
+                if id[i] != row[idCol[i]] and toStr(id[i]) != toStr(row[idCol[i]]):
                     matchTag = False
                     break
             if matchTag:
@@ -177,11 +199,14 @@ def getRowData(id, idCol, returnCol, findData: list):
                     return returnList
                 else:
                     return row[returnCol]
-    return [None] * returnNum
+    if isinstance(returnCol, list):
+        return [None] * returnNum
+    else:
+        return None
 
 
 def getRangeRow(findRange, findValue):
-    """在一维Range内查找目标所在行，未查到时返回插入位置
+    """在Range内查找目标所在行，未查到时返回插入位置
 
     Args:
         findRange (_type_): 查找的Range
@@ -193,9 +218,31 @@ def getRangeRow(findRange, findValue):
     findData = findRange.value
     insertRow = 1
     for i in range(len(findData)):
-        if findData[i] == findValue:
+        if toStr(findData[i]) == toStr(findValue):
             return i, insertRow
-        elif isNumber(findData[i]) and findData[i] < findValue:
+        elif isNumber(findData[i]) and isNumber(findValue) and toNum(findData[i]) < toNum(findValue):
+            insertRow = i + 2
+    else:
+        return int(-1), insertRow
+
+
+def getListRow(findData, findValue, findCol=0):
+    """在二维列表中查找数据所在行和插入位置
+
+    Args:
+        findList (_type_): 查找的二维数组
+        findValue (_type_): 查找的id
+        findCol (int, optional): id所在列. Defaults to 0.
+    
+    Returns:
+        _type_: 数据所在行，插入行
+    """
+    insertRow = 1
+    for i in range(len(findData)):
+        checkValue = findData[i][findCol]
+        if toStr(checkValue) == toStr(findValue):
+            return i, insertRow
+        elif isNumber(checkValue) and isNumber(findValue) and toNum(checkValue) < toNum(findValue):
             insertRow = i + 2
     else:
         return int(-1), insertRow
@@ -280,7 +327,7 @@ def isNumber(content):
         _type_: _description_
     """
     try:
-        int(content)
+        float(content)
         return True
     except BaseException:
         return False
@@ -326,14 +373,14 @@ def quitHideApp():
             app.quit()
 
 
-def getTablePath():
+def getTablePath(newSelect=False):
     """获取操作的配置表目录
 
     Returns:
         str: 配置表目录路径
     """
     configPath = os.path.dirname(__file__) + r'\config.txt'
-    if os.path.exists(configPath):
+    if os.path.exists(configPath) and newSelect is False:
         with open(configPath, 'r', encoding='GBK') as file:
             tablePath = file.read()
             if os.path.exists(tablePath):

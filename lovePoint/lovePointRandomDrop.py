@@ -38,6 +38,7 @@ def main():
         itemCol = getDataOrder(dropCols, 'Item') + 1
         weightCol = getDataOrder(dropCols, 'Weight') + 1
         timesCol = getDataOrder(dropCols, 'MaxTime') + 1
+        conditionCol = getDataOrder(dropCols, 'ConditionWeight') + 1
 
         for j in range(len(dataRng[0])):
             count = [0, 0, 0, 0]
@@ -62,6 +63,24 @@ def main():
                         dropWb.cells(dataRow, itemCol).raw_value = itemType + '=' + toStr(itemID) + '=1'
                         dropWb.cells(dataRow, weightCol).raw_value = 500
                         dropWb.cells(dataRow, timesCol).raw_value = 1
+
+                        if dataRng[row][j + 2] is not None:
+                            conditionStr = toStr(dataRng[row][j + 2]) + '=0|0=500'
+                            dropWb.cells(dataRow, conditionCol).raw_value = conditionStr
+                # 清除溢出的旧数据
+                for level in range(1, len(count)):
+                    tempCount = 1
+                    while True:
+                        if groupId is not None:
+                            id = groupId * 10000 + level * 1000 + count[level] + tempCount
+                            dataRow = dropWb.findRowById(id, idCol)
+                            if dataRow == -1:
+                                break
+                            else:
+                                dropWb.deleteRow(dataRow)
+                                tempCount += 1
+                        else:
+                            break
 
     finally:
         app.screen_updating = True

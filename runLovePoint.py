@@ -8,21 +8,20 @@ from lovePoint import lovePointDraw
 from lovePoint import lovePointLev
 
 try:
+    programMap = {
+        'lovePoint': lovePoint,
+        'lovePointRandomDrop': lovePointRandomDrop,
+        'lovePointTask': lovePointTask,
+        'lovePointDraw': lovePointDraw,
+        'lovePointLev': lovePointLev
+    }
     common.quitHideApp()
     if len(sys.argv) == 1:
-        lovePoint.main()
+        lovePointTask.main()
     for p in sys.argv[1:]:
         print("执行脚本：" + p)
-        if p == 'lovePoint':
-            lovePoint.main()
-        elif p == 'lovePointRandomDrop':
-            lovePointRandomDrop.main()
-        elif p == 'lovePointTask':
-            lovePointTask.main()
-        elif p == 'lovePointDraw':
-            lovePointDraw.main()
-        elif p == 'lovePointLev':
-            lovePointLev.main()
+        if p in programMap:
+            programMap[p].main()
         else:
             input("未找到可执行脚本:" + p)
 except BaseException:
