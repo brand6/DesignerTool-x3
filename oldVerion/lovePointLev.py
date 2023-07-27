@@ -1,7 +1,7 @@
 import xlwings as xw
 from xlwings import Range
 from xlwings import Sheet
-from lovePoint import lovePointDraw
+from love import lovePointDraw
 
 getDataList = lovePointDraw.getDataList
 getParaDict = lovePointDraw.getParaDict
@@ -19,10 +19,10 @@ levBeginLine = 3  # 数据开始行（excel行数-1）
 
 
 def main():
-    levSht: Sheet = xw.books.active.sheets['亲密度验算']
-    paraSht: Sheet = xw.books.active.sheets['验算参数']
-    developSht: Sheet = xw.books.active.sheets['养成数据']
-    drawSht: Sheet = xw.books.active.sheets['抽卡计算']
+    levSht: Sheet = xw.books.active.sheets["亲密度验算"]
+    paraSht: Sheet = xw.books.active.sheets["验算参数"]
+    developSht: Sheet = xw.books.active.sheets["养成数据"]
+    drawSht: Sheet = xw.books.active.sheets["抽卡计算"]
     levRange: Range = levSht.used_range
     paraRange: Range = paraSht.used_range
     drawRange: Range = drawSht.used_range
@@ -30,15 +30,15 @@ def main():
 
     itemList = getDataList(paraRange, "养成参数", -1)
     itemDict = getItemsDict(itemList)
-    strList = ['爬塔经验', '养成上限', '养成资源价值']
+    strList = ["爬塔经验", "养成上限", "养成资源价值"]
     dayDict = getDaysDict(paraRange.value, strList)
     drawList = []
     for i in range(1, len(itemList[0])):
-        drawList.append(itemList[0][i] + '数量')
-        drawList.append(itemList[0][i] + '进阶')
+        drawList.append(itemList[0][i] + "数量")
+        drawList.append(itemList[0][i] + "进阶")
     drawDayDict = getDayDrawDict(drawRange.value, drawList)
-    levDict = getlevsDict(developRange.value, ['升级经验价值', '突破价值', '等级战力', '突破战力'])
-    l_towerList = getDataList(levRange, '爬塔层数', playExtendNum)
+    levDict = getlevsDict(developRange.value, ["升级经验价值", "突破价值", "等级战力", "突破战力"])
+    l_towerList = getDataList(levRange, "爬塔层数", playExtendNum)
     l_dayList = getDataList(levRange, "天数", 0)
     # limitDict = getLimitDict(levRange.value)
 
@@ -85,14 +85,14 @@ def main():
         stageList.append(sList)
 
     # 计算数量
-    print('开始处理数量')
+    print("开始处理数量")
     for i in range(1, len(itemList[0])):
         item = itemList[0][i]
         itemNumStr = item + "数量"
         itemStageStr = item + "深化"
         l_numList = getDataList(levRange, itemNumStr, playExtendNum)  # 牵绊度系统计算的数量
         l_stageList = getDataList(levRange, itemStageStr, playExtendNum)
-        print(item + '处理中...')
+        print(item + "处理中...")
         for n in range(levBeginLine, dayCount):
             day = l_dayList[n]
             for m in range(playerCount):
@@ -111,8 +111,8 @@ def main():
                 collectNum = 0
                 if num > 0:  # 计算出战列表和收集列表
                     if i < 3:  # 搭档
-                        if fightScoreNumList[n][m] < itemDict[item]['出战数量']:  # 出战列表有空位
-                            fightMaxNum = itemDict[item]['出战数量'] - fightScoreNumList[n][m]
+                        if fightScoreNumList[n][m] < itemDict[item]["出战数量"]:  # 出战列表有空位
+                            fightMaxNum = itemDict[item]["出战数量"] - fightScoreNumList[n][m]
                             if num > fightMaxNum:  # 数量有溢出，可进收藏列表
                                 fightNum = fightMaxNum
                                 collectNum = num - fightMaxNum
@@ -122,8 +122,8 @@ def main():
                         else:
                             collectNum = num
                     else:  # 思念
-                        if fightCardNumList[n][m] < itemDict[item]['出战数量']:  # 出战列表有空位
-                            fightMaxNum = itemDict[item]['出战数量'] - fightCardNumList[n][m]
+                        if fightCardNumList[n][m] < itemDict[item]["出战数量"]:  # 出战列表有空位
+                            fightMaxNum = itemDict[item]["出战数量"] - fightCardNumList[n][m]
                             if num > fightMaxNum:
                                 fightNum = fightMaxNum
                                 collectNum = num - fightMaxNum
@@ -138,25 +138,25 @@ def main():
         setRangeData(l_stageList, levSht, levBeginLine + 1, itemStageStr, levBeginLine)
 
     # 计算养成等级
-    print('开始计算养成进度')
+    print("开始计算养成进度")
     for n in range(levBeginLine, dayCount):
         day = l_dayList[n]
         # limitPower = getLimitNum(limitDict, day, '爬塔层数')
         for m in range(playerCount):
-            limitLev = int(dayDict[day]['养成上限'][m])
-            hasValue = dayDict[day]['养成资源价值'][m]
+            limitLev = int(dayDict[day]["养成上限"][m])
+            hasValue = dayDict[day]["养成资源价值"][m]
             collectValue = 0
             for lev in range(1, limitLev + 1):
                 breakTimes = int((lev - 1) / 10)
                 cosValue = 0
                 if breakTimes > 0:
                     for item in fightMapList[n][m]:
-                        cosValue += levDict[breakTimes]['突破价值'][item] * fightMapList[n][m][item]
+                        cosValue += levDict[breakTimes]["突破价值"][item] * fightMapList[n][m][item]
                     if cosValue > hasValue:
                         breakTimes -= 1
                         break
                 for item in fightMapList[n][m]:
-                    cosValue += levDict[lev]['升级经验价值'][item] * fightMapList[n][m][item]
+                    cosValue += levDict[lev]["升级经验价值"][item] * fightMapList[n][m][item]
                 if cosValue > hasValue:
                     lev -= 1
                     break
@@ -172,16 +172,16 @@ def main():
                     sumAwakeList[n][m][item] = fightMapList[n][m][item]
                 else:
                     sumAwakeList[n][m][item] = 0
-                power = fightMapList[n][m][item] * levDict[lev]['等级战力'][item]
+                power = fightMapList[n][m][item] * levDict[lev]["等级战力"][item]
                 if breakTimes > 0:
-                    power += fightMapList[n][m][item] * levDict[breakTimes]['突破战力'][item]
-                power = power * (1 + stageList[n][m][item] * itemDict[item]['深化强度'])
+                    power += fightMapList[n][m][item] * levDict[breakTimes]["突破战力"][item]
+                power = power * (1 + stageList[n][m][item] * itemDict[item]["深化强度"])
                 powerList[n][m] += power
             if powerList[n][m] < 1:
                 l_towerList[n][m] = 0
             else:
                 # l_towerList[n][m] = dayDict[min(day * 10, int(powerList[n][m]), limitPower)]['爬塔经验'][0]
-                l_towerList[n][m] = dayDict[min(day * 10, int(powerList[n][m]))]['爬塔经验'][0]
+                l_towerList[n][m] = dayDict[min(day * 10, int(powerList[n][m]))]["爬塔经验"][0]
 
             if collectValue > 0:  # 养成材料有溢出
                 for lev in range(1, limitLev + 1):
@@ -190,12 +190,12 @@ def main():
                     cosValue = 0
                     if breakTimes > 0:
                         for item in collectMapList[n][m]:
-                            cosValue += levDict[breakTimes]['突破价值'][item] * collectMapList[n][m][item]
+                            cosValue += levDict[breakTimes]["突破价值"][item] * collectMapList[n][m][item]
                         if cosValue > collectValue:
                             breakTimes -= 1
                             break
                     for item in collectMapList[n][m]:
-                        cosValue += levDict[lev]['升级经验价值'][item] * collectMapList[n][m][item]
+                        cosValue += levDict[lev]["升级经验价值"][item] * collectMapList[n][m][item]
                     if cosValue > collectValue:
                         lev -= 1
                         break
@@ -208,9 +208,9 @@ def main():
                         sumAwakeList[n][m][item] += collectMapList[n][m][item]
                     else:
                         sumAwakeList[n][m][item] = 0
-    setRangeData(l_towerList, levSht, levBeginLine + 1, '爬塔层数', levBeginLine)
+    setRangeData(l_towerList, levSht, levBeginLine + 1, "爬塔层数", levBeginLine)
 
-    print('开始输出养成进度')
+    print("开始输出养成进度")
     for i in range(1, len(itemList[0])):
         item = itemList[0][i]
         itemLevStr = item + "等级"
@@ -220,7 +220,7 @@ def main():
         if i < 3:
             l_AwakeStr = item + "觉醒"
             l_AwakeList = getDataList(levRange, l_AwakeStr, playExtendNum)
-        print(item + '处理中...')
+        print(item + "处理中...")
         for n in range(levBeginLine, dayCount):
             for m in range(playerCount):
                 l_LevList[n][m] = sumLevList[n][m][item]
@@ -232,14 +232,14 @@ def main():
         setRangeData(l_BreakList, levSht, levBeginLine + 1, itemBreakStr, levBeginLine)
         if i < 3:
             setRangeData(l_AwakeList, levSht, levBeginLine + 1, l_AwakeStr, levBeginLine)
-    print('程序执行完毕')
+    print("程序执行完毕")
 
 
 def getLimitNum(limitDict: map, day, colStr):
     isTest = True  # 是否取测试上限
     limitNum = 0
     if isTest:
-        return limitDict['二测'][colStr]
+        return limitDict["二测"][colStr]
     else:
         for key in limitDict:
             if not isinstance(key, str) and key <= day:
@@ -260,14 +260,14 @@ def getLimitDict(levList):
     limitDict = {}
     limitCount = 0
     for i in range(len(levList)):
-        if levList[i][0] == '资源上限':
+        if levList[i][0] == "资源上限":
             limitCount += 1
         if limitCount > 1:
             break
         elif limitCount > 0:
             dayDict = {}
             for j in range(len(levList[0])):
-                if levList[0][j] is not None and levList[0][j] != '':
+                if levList[0][j] is not None and levList[0][j] != "":
                     dayDict[levList[0][j]] = levList[i][j]
             limitDict[levList[i][0]] = dayDict
     return limitDict
@@ -288,7 +288,7 @@ def getDayDrawDict(drawList: list, colList: list, titleRow=1, playExtendNum=3):
     dayCol = 0
     colNum = len(drawList[titleRow])
     for i in range(len(drawList[titleRow])):
-        if drawList[titleRow][i] == '日期':
+        if drawList[titleRow][i] == "日期":
             dayCol = i
             break
 
@@ -322,7 +322,7 @@ def getLevExp(item, lev, itemDict, levType=0):
                 formatLev = level
             else:
                 break
-        itemLev = '等级' + str(int(formatLev))
+        itemLev = "等级" + str(int(formatLev))
     else:
-        itemLev = '突破' + str(int(lev))
+        itemLev = "突破" + str(int(lev))
     return itemDict[item][itemLev]

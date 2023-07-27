@@ -20,6 +20,10 @@ from common import common
 伤害盒导出：增加技能id
 """
 
+###
+# 用于检查技能的配置是否有错误
+###
+
 
 def main():
     dataWb = xw.books.active

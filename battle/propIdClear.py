@@ -3,10 +3,15 @@ from xlwings import Sheet
 from common import common
 import numpy as np
 
+###
+# 用于清理无效的怪物属性表的id
+###
+
 
 def main():
-    wbPath = xw.books.active.fullname
-    programPath = wbPath[:wbPath.rfind(r'\SpawnCsv')]
+    tablePath = common.getTablePath()
+    loc = tablePath.index('Program')
+    programPath = tablePath[:loc] + r'Program'
     levPath = programPath + r'\Binaries\Tables\OriginTable\Battle\BattleLevel.xlsx'
     propPath = programPath + r'\Binaries\Tables\OriginTable\Battle\BattleMonsterProperty.xlsx'
 

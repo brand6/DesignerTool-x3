@@ -171,7 +171,6 @@ def getRowData(id, idCol, returnCol, findData: list):
     Returns:
         property: 属性值
     """
-    returnNum = 1
     if isinstance(id, list):
         for row in findData:
             matchTag = True
@@ -181,7 +180,6 @@ def getRowData(id, idCol, returnCol, findData: list):
                     break
             if matchTag:
                 if isinstance(returnCol, list):
-                    returnNum = len(returnCol)
                     returnList = []
                     for col in returnCol:
                         returnList.append(row[col])
@@ -192,7 +190,6 @@ def getRowData(id, idCol, returnCol, findData: list):
         for row in findData:
             if row[idCol] == id:
                 if isinstance(returnCol, list):
-                    returnNum = len(returnCol)
                     returnList = []
                     for col in returnCol:
                         returnList.append(row[col])
@@ -200,7 +197,7 @@ def getRowData(id, idCol, returnCol, findData: list):
                 else:
                     return row[returnCol]
     if isinstance(returnCol, list):
-        return [None] * returnNum
+        return [None] * len(returnCol)
     else:
         return None
 

@@ -1,19 +1,13 @@
 import sys
 import traceback
 from common import common
-from lovePoint import lovePoint
-from lovePoint import lovePointRandomDrop
-from lovePoint import lovePointTask
-from lovePoint import lovePointDraw
-from lovePoint import lovePointLev
+from love import lovePoint, lovePointRandomDrop, lovePointTask
 
 try:
     programMap = {
-        'lovePoint': lovePoint,
-        'lovePointRandomDrop': lovePointRandomDrop,
-        'lovePointTask': lovePointTask,
-        'lovePointDraw': lovePointDraw,
-        'lovePointLev': lovePointLev
+        "lovePoint": lovePoint,
+        "lovePointRandomDrop": lovePointRandomDrop,
+        "lovePointTask": lovePointTask,
     }
     common.quitHideApp()
     if len(sys.argv) == 1:

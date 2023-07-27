@@ -1,10 +1,7 @@
 import sys
 import traceback
 from common import common
-from miaoCard import miaoCardAIAction
-from miaoCard import miaoCardInit
-from miaoCard import miaoCardWinRate
-
+from miaoCard import miaoCardAIAction, miaoCardInit, miaoCardWinRate
 try:
     programMap = {'miaoCardAIAction': miaoCardAIAction, 'miaoCardInit': miaoCardInit, 'miaoCardWinRate': miaoCardWinRate}
     common.quitHideApp()

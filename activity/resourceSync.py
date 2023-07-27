@@ -71,7 +71,7 @@ def main():
                             checkIds.append(dataList[row][i])
                         rowData = common.getRowData(checkIds, checkColMap[colKey], findColMap[colKey], findData)
                         if rowData == [None] * len(findColMap[colKey]):
-                            print(colKey, '缺少key-id：', checkIds)
+                            print(colKey, '缺少key-id：', checkIds, '或奖励内容为空')
                         for i in range(len(findColMap[colKey])):
                             resultMap[resultColMap[colKey][i]].append(rowData[i])
 

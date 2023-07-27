@@ -6,8 +6,9 @@ import os
 
 
 def main():
-    wbPath = xw.books.active.fullname
-    programPath = wbPath[:wbPath.rfind(r'\SpawnCsv')]
+    tablePath = common.getTablePath()
+    loc = tablePath.index('Program')
+    programPath = tablePath[:loc] + r'Program'
     spawnPath = programPath + r'\SpawnCsv\stageSpawnPoint.csv'
     levPath = programPath + r'\Binaries\Tables\OriginTable\Battle\BattleLevel.xlsx'
     comPath = programPath + r'\Binaries\Tables\OriginTable\CommonStageEntry.xlsx'

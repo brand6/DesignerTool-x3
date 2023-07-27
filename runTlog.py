@@ -1,9 +1,7 @@
 import sys
 import traceback
 from common import common
-from tlog import tlog
-from tlog import tlogAll
-from tlog import weiDu
+from tlog import tlog, tlogAll, weiDu
 
 try:
     programMap = {'tlog': tlog, 'tlogAll': tlogAll, 'weiDu': weiDu}

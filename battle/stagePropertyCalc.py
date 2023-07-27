@@ -5,6 +5,10 @@ from common import printer
 from battle import monsterIdSync
 import numpy as np
 
+###
+# 根据怪物表配的时长配置关卡属性
+###
+
 
 def main():
     myPrinter = printer.Printer()
